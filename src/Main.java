@@ -8,7 +8,7 @@ public class Main {
     static JTextArea text = new JTextArea();
     static boolean changed = false;
 
-    public static void main(String[] args) {
+    public static void main(String args []) {
         JFrame frame = new JFrame("Qery");
         JMenuBar bar = new JMenuBar();
         JMenu file = new JMenu("File");
@@ -17,11 +17,33 @@ public class Main {
         JMenuItem saveFile = new JMenuItem("Save");
         JMenuItem saveAs = new JMenuItem("Save As");
         JMenuItem exit = new JMenuItem("Exit");
+        JMenu edit = new JMenu("Edit");
+        JMenuItem undo = new JMenuItem("Undo");
+        JMenuItem redo = new JMenuItem("Redo");
+        JMenuItem cut = new JMenuItem("Cut");
+        JMenuItem copy = new JMenuItem("Copy");
+        JMenuItem paste = new JMenuItem("Paste");
+        JMenuItem selectAll = new JMenuItem("Select All");
 
         newFile.setAccelerator(KeyStroke.getKeyStroke("control N"));
         openFile.setAccelerator(KeyStroke.getKeyStroke("control O"));
         saveFile.setAccelerator(KeyStroke.getKeyStroke("control S"));
         saveAs.setAccelerator(KeyStroke.getKeyStroke("control shift S"));
+
+        cut.addActionListener(e -> text.cut());
+        copy.addActionListener(e -> text.copy());
+        paste.addActionListener(e -> text.paste());
+        selectAll.addActionListener(e -> text.selectAll());
+
+        edit.add(undo);
+        edit.add(redo);
+        edit.addSeparator();
+        edit.add(cut);
+        edit.add(copy);
+        edit.add(paste);
+        edit.addSeparator();
+        edit.add(selectAll);
+        bar.add(edit);
 
         text.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             public void insertUpdate(javax.swing.event.DocumentEvent e) {
