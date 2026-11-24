@@ -26,42 +26,51 @@ public class Main {
         text.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             public void insertUpdate(javax.swing.event.DocumentEvent e) {
                 changed = true;
+                updateTitle(frame);
             }
 
             public void removeUpdate(javax.swing.event.DocumentEvent e) {
                 changed = true;
+                updateTitle(frame);
             }
 
             public void changedUpdate(javax.swing.event.DocumentEvent e) {
                 changed = true;
+                updateTitle(frame);
             }
         });
-
         newFile.addActionListener(e -> {
             if (confirm(frame)) {
                 text.setText("");
                 currentFile = null;
                 changed = false;
+                updateTitle(frame);
             }
         });
         openFile.addActionListener(e -> {
             if (!confirm(frame)) return;
 
             JFileChooser chooser = new JFileChooser();
-            if (chooser.showOpenDialog(frame) == 0) {
+
+            if (chooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
                 try {
                     currentFile = chooser.getSelectedFile();
                     text.setText(Files.readString(currentFile.toPath()));
                     changed = false;
+                    updateTitle(frame);
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(frame, "Could not OPEN file");
+                    JOptionPane.showMessageDialog(frame, "Could not open file");
                 }
             }
         });
         saveFile.addActionListener(e -> save(frame));
         saveAs.addActionListener(e -> {
-            currentFile = null;
-            save(frame);
+            JFileChooser chooser = new JFileChooser();
+
+            if (chooser.showSaveDialog(frame) == JFileChooser.APPROVE_OPTION) {
+                currentFile = chooser.getSelectedFile();
+                save(frame);
+            }
         });
         exit.addActionListener(e -> {
             if (confirm(frame)) frame.dispose();
@@ -85,6 +94,7 @@ public class Main {
             }
         });
 
+        updateTitle(frame);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
@@ -93,8 +103,10 @@ public class Main {
         if (!changed) return true;
 
         int result = JOptionPane.showConfirmDialog(
-            frame, "You have unsaved changes. Continue?",
-            "Qery", JOptionPane.YES_NO_OPTION
+            frame,
+            "You have unsaved changes. Continue?",
+            "Qery",
+            JOptionPane.YES_NO_OPTION
         );
 
         return result == JOptionPane.YES_OPTION;
@@ -103,15 +115,21 @@ public class Main {
     static void save(JFrame frame) {
         if (currentFile == null) {
             JFileChooser chooser = new JFileChooser();
-            if (chooser.showSaveDialog(frame) != 0) return;
+            if (chooser.showSaveDialog(frame) != JFileChooser.APPROVE_OPTION) return;
             currentFile = chooser.getSelectedFile();
         }
 
         try {
             Files.writeString(currentFile.toPath(), text.getText());
             changed = false;
+            updateTitle(frame);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(frame, "Could not SAVE file");
+            JOptionPane.showMessageDialog(frame, "Could not save file");
         }
+    }
+
+    static void updateTitle(JFrame frame) {
+        String name = currentFile == null ? "Untitled" : currentFile.getName();
+        frame.setTitle((changed ? "* " : "") + name + " - Qery");
     }
 }
