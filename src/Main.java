@@ -1,5 +1,6 @@
 
 import javax.swing.*;
+import javax.swing.undo.*;
 import java.io.*;
 import java.nio.file.*;
 
@@ -7,17 +8,18 @@ public class Main {
     static File currentFile;
     static JTextArea text = new JTextArea();
     static boolean changed = false;
+    static UndoManager undoManager = new UndoManager();
 
-    public static void main(String args []) {
+    public static void main(String args[]) {
         JFrame frame = new JFrame("Qery");
         JMenuBar bar = new JMenuBar();
         JMenu file = new JMenu("File");
+        JMenu edit = new JMenu("Edit");
         JMenuItem newFile = new JMenuItem("New");
         JMenuItem openFile = new JMenuItem("Open");
         JMenuItem saveFile = new JMenuItem("Save");
         JMenuItem saveAs = new JMenuItem("Save As");
         JMenuItem exit = new JMenuItem("Exit");
-        JMenu edit = new JMenu("Edit");
         JMenuItem undo = new JMenuItem("Undo");
         JMenuItem redo = new JMenuItem("Redo");
         JMenuItem cut = new JMenuItem("Cut");
@@ -29,21 +31,12 @@ public class Main {
         openFile.setAccelerator(KeyStroke.getKeyStroke("control O"));
         saveFile.setAccelerator(KeyStroke.getKeyStroke("control S"));
         saveAs.setAccelerator(KeyStroke.getKeyStroke("control shift S"));
+        undo.setAccelerator(KeyStroke.getKeyStroke("control Z"));
+        redo.setAccelerator(KeyStroke.getKeyStroke("control Y"));
 
-        cut.addActionListener(e -> text.cut());
-        copy.addActionListener(e -> text.copy());
-        paste.addActionListener(e -> text.paste());
-        selectAll.addActionListener(e -> text.selectAll());
-
-        edit.add(undo);
-        edit.add(redo);
-        edit.addSeparator();
-        edit.add(cut);
-        edit.add(copy);
-        edit.add(paste);
-        edit.addSeparator();
-        edit.add(selectAll);
-        bar.add(edit);
+        text.getDocument().addUndoableEditListener(e ->
+            undoManager.addEdit(e.getEdit())
+        );
 
         text.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             public void insertUpdate(javax.swing.event.DocumentEvent e) {
@@ -61,24 +54,37 @@ public class Main {
                 updateTitle(frame);
             }
         });
+
+        undo.addActionListener(e -> {
+            if (undoManager.canUndo()) undoManager.undo();
+        });
+        redo.addActionListener(e -> {
+            if (undoManager.canRedo()) undoManager.redo();
+        });
+        cut.addActionListener(e -> text.cut());
+        copy.addActionListener(e -> text.copy());
+        paste.addActionListener(e -> text.paste());
+        selectAll.addActionListener(e -> text.selectAll());
+
         newFile.addActionListener(e -> {
             if (confirm(frame)) {
                 text.setText("");
                 currentFile = null;
                 changed = false;
+                undoManager.discardAllEdits();
                 updateTitle(frame);
             }
         });
         openFile.addActionListener(e -> {
             if (!confirm(frame)) return;
-
             JFileChooser chooser = new JFileChooser();
-
             if (chooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
                 try {
+                    String content = Files.readString(chooser.getSelectedFile().toPath());
+                    text.setText(content);
                     currentFile = chooser.getSelectedFile();
-                    text.setText(Files.readString(currentFile.toPath()));
                     changed = false;
+                    undoManager.discardAllEdits();
                     updateTitle(frame);
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(frame, "Could not open file");
@@ -90,8 +96,10 @@ public class Main {
             JFileChooser chooser = new JFileChooser();
 
             if (chooser.showSaveDialog(frame) == JFileChooser.APPROVE_OPTION) {
+                File oldFile = currentFile;
                 currentFile = chooser.getSelectedFile();
                 save(frame);
+                if (changed) currentFile = oldFile;
             }
         });
         exit.addActionListener(e -> {
@@ -104,7 +112,17 @@ public class Main {
         file.add(saveAs);
         file.addSeparator();
         file.add(exit);
+        edit.add(undo);
+        edit.add(redo);
+        edit.addSeparator();
+        edit.add(cut);
+        edit.add(copy);
+        edit.add(paste);
+        edit.addSeparator();
+        edit.add(selectAll);
         bar.add(file);
+        bar.add(edit);
+
         frame.setJMenuBar(bar);
         frame.add(new JScrollPane(text));
         frame.setSize(900, 600);
