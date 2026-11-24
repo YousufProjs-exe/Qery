@@ -28,7 +28,11 @@ public class Main {
         JMenuItem copy = new JMenuItem("Copy");
         JMenuItem paste = new JMenuItem("Paste");
         JMenuItem selectAll = new JMenuItem("Select All");
+        JMenuItem find = new JMenuItem("Find");
+        JMenuItem replace = new JMenuItem("Replace");
 
+        find.setAccelerator(KeyStroke.getKeyStroke("control F"));
+        replace.setAccelerator(KeyStroke.getKeyStroke("control H"));
         newFile.setAccelerator(KeyStroke.getKeyStroke("control N"));
         openFile.setAccelerator(KeyStroke.getKeyStroke("control O"));
         saveFile.setAccelerator(KeyStroke.getKeyStroke("control S"));
@@ -57,7 +61,6 @@ public class Main {
         copy.addActionListener(e -> text.copy());
         paste.addActionListener(e -> text.paste());
         selectAll.addActionListener(e -> text.selectAll());
-
         newFile.addActionListener(e -> {
             if (confirm(frame)) {
                 text.setText("");
@@ -82,6 +85,36 @@ public class Main {
                     JOptionPane.showMessageDialog(frame, "Could not open file");
                 }
             }
+        });
+        find.addActionListener(e -> {
+            String word = JOptionPane.showInputDialog(frame, "Find:");
+            if (word == null || word.isEmpty()) return;
+
+            int start = text.getCaretPosition();
+            int index = text.getText().indexOf(word, start);
+
+            if (index == -1) index = text.getText().indexOf(word);
+
+            if (index != -1) {
+                text.select(index, index + word.length());
+            } else {
+                JOptionPane.showMessageDialog(frame, "Text not found");
+            }
+        });
+        replace.addActionListener(e -> {
+            String findText = JOptionPane.showInputDialog(frame, "Find:");
+            if (findText == null || findText.isEmpty()) return;
+
+            String replaceText = JOptionPane.showInputDialog(frame, "Replace with:");
+            if (replaceText == null) return;
+
+            String content = text.getText();
+            if (!content.contains(findText)) {
+                JOptionPane.showMessageDialog(frame, "Text not found");
+                return;
+            }
+
+            text.setText(content.replace(findText, replaceText));
         });
         saveFile.addActionListener(e -> save(frame));
         saveAs.addActionListener(e -> {
@@ -109,6 +142,8 @@ public class Main {
         edit.add(copy);
         edit.add(paste);
         edit.addSeparator();
+        edit.add(find);
+        edit.add(replace);
         edit.add(selectAll);
         bar.add(file);
         bar.add(edit);
