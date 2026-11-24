@@ -1,6 +1,8 @@
 
 import javax.swing.*;
 import javax.swing.undo.*;
+import javax.swing.event.*;
+import java.awt.Color;
 import java.io.*;
 import java.nio.file.*;
 
@@ -34,33 +36,23 @@ public class Main {
         undo.setAccelerator(KeyStroke.getKeyStroke("control Z"));
         redo.setAccelerator(KeyStroke.getKeyStroke("control Y"));
 
-        text.getDocument().addUndoableEditListener(e ->
-            undoManager.addEdit(e.getEdit())
-        );
-
-        text.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+        text.getDocument().addUndoableEditListener(e -> undoManager.addEdit(e.getEdit()));
+        text.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) {
                 changed = true;
                 updateTitle(frame);
             }
-
-            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+            public void removeUpdate(DocumentEvent e) {
                 changed = true;
                 updateTitle(frame);
             }
-
-            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+            public void changedUpdate(DocumentEvent e) {
                 changed = true;
                 updateTitle(frame);
             }
         });
-
-        undo.addActionListener(e -> {
-            if (undoManager.canUndo()) undoManager.undo();
-        });
-        redo.addActionListener(e -> {
-            if (undoManager.canRedo()) undoManager.redo();
-        });
+        undo.addActionListener(e -> { if (undoManager.canUndo()) undoManager.undo(); });
+        redo.addActionListener(e -> { if (undoManager.canRedo()) undoManager.redo(); });
         cut.addActionListener(e -> text.cut());
         copy.addActionListener(e -> text.copy());
         paste.addActionListener(e -> text.paste());
@@ -102,9 +94,7 @@ public class Main {
                 if (changed) currentFile = oldFile;
             }
         });
-        exit.addActionListener(e -> {
-            if (confirm(frame)) frame.dispose();
-        });
+        exit.addActionListener(e -> { if (confirm(frame)) frame.dispose(); });
 
         file.add(newFile);
         file.add(openFile);
@@ -124,7 +114,37 @@ public class Main {
         bar.add(edit);
 
         frame.setJMenuBar(bar);
-        frame.add(new JScrollPane(text));
+        JTextArea lines = new JTextArea("1");
+        lines.setBackground(text.getBackground());
+        lines.setForeground(Color.GRAY);
+        lines.setEditable(false);
+        lines.setFocusable(false);
+
+        text.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) {
+                updateLines();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                updateLines();
+            }
+
+            public void changedUpdate(DocumentEvent e) {
+                updateLines();
+            }
+
+            void updateLines() {
+                StringBuilder numbers = new StringBuilder();
+                for (int i = 1; i <= text.getLineCount(); i++) {
+                    numbers.append(i).append("\n");
+                }
+                lines.setText(numbers.toString());
+            }
+        });
+
+        JScrollPane scroll = new JScrollPane(text);
+        scroll.setRowHeaderView(lines);
+        frame.add(scroll);
         frame.setSize(900, 600);
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
