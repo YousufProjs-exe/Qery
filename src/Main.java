@@ -51,6 +51,7 @@ public class Main {
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel findLabel = new JLabel("Find:");
         JLabel replaceLabel = new JLabel("Replace:");
+        JLabel status = new JLabel("Ln 1, Col 1");
         JButton previous = new JButton("\u2191");
         JButton next = new JButton("\u2193");
         JButton replaceOne = new JButton("Replace");
@@ -73,6 +74,16 @@ public class Main {
         resetFont.setAccelerator(KeyStroke.getKeyStroke("ctrl 0"));
         exit.setAccelerator(KeyStroke.getKeyStroke("ctrl Q"));
 
+        text.addCaretListener(e -> {
+            try {
+                int line = text.getLineOfOffset(e.getDot());
+                int column = e.getDot() - text.getLineStartOffset(line);
+            
+                status.setText("Ln " + (line + 1) + ", Col " + (column + 1));
+            } catch (BadLocationException ex) {
+                status.setText("Ln 1, Col 1");
+            }
+        });
         text.getDocument().addUndoableEditListener(e -> undoManager.addEdit(e.getEdit()));
         text.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
@@ -232,6 +243,7 @@ public class Main {
         bar.add(view);
 
         frame.setJMenuBar(bar);
+        frame.add(status, BorderLayout.SOUTH);
         lines.setText("1");
         lines.setBackground(text.getBackground());
         lines.setForeground(Color.GRAY);
