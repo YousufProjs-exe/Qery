@@ -23,6 +23,7 @@ public class Main {
     static Highlighter.HighlightPainter selectedPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.ORANGE);
 
     public static void main(String args[]) {
+        // Menu and all
         JFrame frame = new JFrame("Qery");
         JMenuBar bar = new JMenuBar();
         JMenu file = new JMenu("File");
@@ -55,6 +56,7 @@ public class Main {
         JButton replaceEvery = new JButton("Replace All");
         JButton closeSearch = new JButton("X");
 
+        // Shortcuts 
         find.setAccelerator(KeyStroke.getKeyStroke("control F"));
         replace.setAccelerator(KeyStroke.getKeyStroke("control H"));
         newFile.setAccelerator(KeyStroke.getKeyStroke("control N"));
@@ -63,6 +65,10 @@ public class Main {
         saveAs.setAccelerator(KeyStroke.getKeyStroke("control shift S"));
         undo.setAccelerator(KeyStroke.getKeyStroke("control Z"));
         redo.setAccelerator(KeyStroke.getKeyStroke("control Y"));
+        increaseFont.setAccelerator(KeyStroke.getKeyStroke("control shift EQUALS"));
+        decreaseFont.setAccelerator(KeyStroke.getKeyStroke("control MINUS"));
+        resetFont.setAccelerator(KeyStroke.getKeyStroke("control 0"));
+        exit.setAccelerator(KeyStroke.getKeyStroke("control Q"));
 
         text.getDocument().addUndoableEditListener(e -> undoManager.addEdit(e.getEdit()));
         text.getDocument().addDocumentListener(new DocumentListener() {
