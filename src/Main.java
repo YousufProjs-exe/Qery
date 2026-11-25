@@ -56,6 +56,7 @@ public class Main {
         JButton replaceOne = new JButton("Replace");
         JButton replaceEvery = new JButton("Replace All");
         JButton closeSearch = new JButton("X");
+        JCheckBoxMenuItem wordWrap = new JCheckBoxMenuItem("Word Wrap");
 
         // Shortcuts 
         find.setAccelerator(KeyStroke.getKeyStroke("control F"));
@@ -182,6 +183,11 @@ public class Main {
             }
         });
 
+        wordWrap.addActionListener(e -> {
+            text.setLineWrap(wordWrap.isSelected());
+            text.setWrapStyleWord(wordWrap.isSelected());
+        });
+
         saveFile.addActionListener(e -> save(frame));
         saveAs.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
@@ -202,6 +208,7 @@ public class Main {
         file.add(saveAs);
         file.addSeparator();
         file.add(exit);
+
         edit.add(undo);
         edit.add(redo);
         edit.addSeparator();
@@ -211,11 +218,14 @@ public class Main {
         edit.addSeparator();
         edit.add(find);
         edit.add(replace);
+        edit.add(goToLine);
         edit.add(selectAll);
+
         view.add(increaseFont);
         view.add(decreaseFont);
         view.add(resetFont);
-        edit.add(goToLine);
+        view.add(wordWrap);
+        
         bar.add(file);
         bar.add(edit);
         bar.add(view);
