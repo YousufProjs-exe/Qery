@@ -1,7 +1,9 @@
-
 import javax.swing.*;
 import javax.swing.undo.*;
 import javax.swing.event.*;
+import javax.swing.text.*;
+import java.awt.*;
+import java.util.ArrayList;
 import java.awt.Color;
 import java.io.*;
 import java.nio.file.*;
@@ -11,6 +13,13 @@ public class Main {
     static JTextArea text = new JTextArea();
     static boolean changed = false;
     static UndoManager undoManager = new UndoManager();
+    static JTextField findField = new JTextField(18);
+    static JTextField replaceField = new JTextField(18);
+    static JLabel matchCount = new JLabel("0 of 0");
+    static ArrayList<Integer> matches = new ArrayList<>();
+    static Object currentHighlight;
+    static Highlighter.HighlightPainter normalPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
+    static Highlighter.HighlightPainter selectedPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.ORANGE);
 
     public static void main(String args[]) {
         JFrame frame = new JFrame("Qery");
@@ -30,6 +39,15 @@ public class Main {
         JMenuItem selectAll = new JMenuItem("Select All");
         JMenuItem find = new JMenuItem("Find");
         JMenuItem replace = new JMenuItem("Replace");
+
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JLabel findLabel = new JLabel("Find:");
+        JLabel replaceLabel = new JLabel("Replace:");
+        JButton previous = new JButton("↑");
+        JButton next = new JButton("↓");
+        JButton replaceOne = new JButton("Replace");
+        JButton replaceEvery = new JButton("Replace All");
+        JButton closeSearch = new JButton("X");
 
         find.setAccelerator(KeyStroke.getKeyStroke("control F"));
         replace.setAccelerator(KeyStroke.getKeyStroke("control H"));
@@ -55,12 +73,14 @@ public class Main {
                 updateTitle(frame);
             }
         });
+
         undo.addActionListener(e -> { if (undoManager.canUndo()) undoManager.undo(); });
         redo.addActionListener(e -> { if (undoManager.canRedo()) undoManager.redo(); });
         cut.addActionListener(e -> text.cut());
         copy.addActionListener(e -> text.copy());
         paste.addActionListener(e -> text.paste());
         selectAll.addActionListener(e -> text.selectAll());
+
         newFile.addActionListener(e -> {
             if (confirm(frame)) {
                 text.setText("");
@@ -70,6 +90,7 @@ public class Main {
                 updateTitle(frame);
             }
         });
+
         openFile.addActionListener(e -> {
             if (!confirm(frame)) return;
             JFileChooser chooser = new JFileChooser();
@@ -86,36 +107,27 @@ public class Main {
                 }
             }
         });
+
         find.addActionListener(e -> {
-            String word = JOptionPane.showInputDialog(frame, "Find:");
-            if (word == null || word.isEmpty()) return;
-
-            int start = text.getCaretPosition();
-            int index = text.getText().indexOf(word, start);
-
-            if (index == -1) index = text.getText().indexOf(word);
-
-            if (index != -1) {
-                text.select(index, index + word.length());
-            } else {
-                JOptionPane.showMessageDialog(frame, "Text not found");
-            }
+            searchPanel.setVisible(true);
+            replaceLabel.setVisible(false);
+            replaceField.setVisible(false);
+            replaceOne.setVisible(false);
+            replaceEvery.setVisible(false);
+            findField.requestFocus();
+            findField.selectAll();
         });
+
         replace.addActionListener(e -> {
-            String findText = JOptionPane.showInputDialog(frame, "Find:");
-            if (findText == null || findText.isEmpty()) return;
-
-            String replaceText = JOptionPane.showInputDialog(frame, "Replace with:");
-            if (replaceText == null) return;
-
-            String content = text.getText();
-            if (!content.contains(findText)) {
-                JOptionPane.showMessageDialog(frame, "Text not found");
-                return;
-            }
-
-            text.setText(content.replace(findText, replaceText));
+            searchPanel.setVisible(true);
+            replaceLabel.setVisible(true);
+            replaceField.setVisible(true);
+            replaceOne.setVisible(true);
+            replaceEvery.setVisible(true);
+            findField.requestFocus();
+            findField.selectAll();
         });
+
         saveFile.addActionListener(e -> save(frame));
         saveAs.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
@@ -127,6 +139,7 @@ public class Main {
                 if (changed) currentFile = oldFile;
             }
         });
+
         exit.addActionListener(e -> { if (confirm(frame)) frame.dispose(); });
 
         file.add(newFile);
@@ -158,14 +171,17 @@ public class Main {
         text.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
                 updateLines();
+                updateSearch();
             }
 
             public void removeUpdate(DocumentEvent e) {
                 updateLines();
+                updateSearch();
             }
 
             public void changedUpdate(DocumentEvent e) {
                 updateLines();
+                updateSearch();
             }
 
             void updateLines() {
@@ -180,6 +196,81 @@ public class Main {
         JScrollPane scroll = new JScrollPane(text);
         scroll.setRowHeaderView(lines);
         frame.add(scroll);
+
+        searchPanel.add(findLabel);
+        searchPanel.add(findField);
+        searchPanel.add(previous);
+        searchPanel.add(next);
+        searchPanel.add(matchCount);
+        searchPanel.add(replaceLabel);
+        searchPanel.add(replaceField);
+        searchPanel.add(replaceOne);
+        searchPanel.add(replaceEvery);
+        searchPanel.add(closeSearch);
+        searchPanel.setVisible(false);
+        frame.add(searchPanel, BorderLayout.NORTH);
+
+        replaceLabel.setVisible(false);
+        replaceField.setVisible(false);
+        replaceOne.setVisible(false);
+        replaceEvery.setVisible(false);
+
+        findField.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) {
+                updateSearch();
+            }
+            public void removeUpdate(DocumentEvent e) {
+                updateSearch();
+            }
+            public void changedUpdate(DocumentEvent e) {
+                updateSearch();
+            }
+        });
+
+        previous.addActionListener(e -> {
+            if (!matches.isEmpty()) {
+                int index = matches.indexOf(text.getSelectionStart());
+                selectMatch(index == -1 ? matches.size() - 1 : index - 1);
+            }
+        });
+
+        next.addActionListener(e -> {
+            if (!matches.isEmpty()) {
+                int index = matches.indexOf(text.getSelectionStart());
+                selectMatch(index == -1 ? 0 : index + 1);
+            }
+        });
+
+        replaceOne.addActionListener(e -> replaceCurrent());
+        replaceEvery.addActionListener(e -> replaceAll());
+
+        closeSearch.addActionListener(e -> {
+            searchPanel.setVisible(false);
+            text.getHighlighter().removeAllHighlights();
+            currentHighlight = null;
+            text.requestFocus();
+        });
+
+        frame.getRootPane().getInputMap(
+            JComponent.WHEN_IN_FOCUSED_WINDOW
+        ).put(KeyStroke.getKeyStroke("control F"), "find");
+
+        frame.getRootPane().getActionMap().put("find", new AbstractAction() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                find.doClick();
+            }
+        });
+
+        frame.getRootPane().getInputMap(
+            JComponent.WHEN_IN_FOCUSED_WINDOW
+        ).put(KeyStroke.getKeyStroke("control H"), "replace");
+
+        frame.getRootPane().getActionMap().put("replace", new AbstractAction() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                replace.doClick();
+            }
+        });
+
         frame.setSize(900, 600);
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
@@ -226,5 +317,97 @@ public class Main {
     static void updateTitle(JFrame frame) {
         String name = currentFile == null ? "Untitled" : currentFile.getName();
         frame.setTitle((changed ? "* " : "") + name + " - Qery");
+    }
+
+    static void updateSearch() {
+        Highlighter highlighter = text.getHighlighter();
+        highlighter.removeAllHighlights();
+        matches.clear();
+        currentHighlight = null;
+
+        String content = text.getText();
+        String word = findField.getText();
+
+        if (word.isEmpty()) {
+            matchCount.setText("0 of 0");
+            return;
+        }
+
+        for (int i = 0; i <= content.length() - word.length(); i++) {
+            if (content.regionMatches(true, i, word, 0, word.length())) {
+                matches.add(i);
+                try {
+                    highlighter.addHighlight(i, i + word.length(), normalPainter);
+                } catch (BadLocationException e) {
+                    e.printStackTrace();
+                }
+                i += word.length() - 1;
+            }
+        }
+
+        if (matches.isEmpty()) {
+            matchCount.setText("0 of 0");
+        } else {
+            selectMatch(0);
+        }
+    }
+
+    static void selectMatch(int index) {
+        if (matches.isEmpty()) return;
+
+        index = (index + matches.size()) % matches.size();
+
+        if (currentHighlight != null) {
+            text.getHighlighter().removeHighlight(currentHighlight);
+        }
+
+        int start = matches.get(index);
+        int end = start + findField.getText().length();
+
+        try {
+            currentHighlight = text.getHighlighter().addHighlight(start, end, selectedPainter);
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
+
+        text.setCaretPosition(end);
+        text.select(start, end);
+        matchCount.setText((index + 1) + " of " + matches.size());
+    }
+
+    static void replaceCurrent() {
+        if (matches.isEmpty()) return;
+
+        int start = text.getSelectionStart();
+        int end = text.getSelectionEnd();
+
+        if (start == end) return;
+
+        text.replaceSelection(replaceField.getText());
+        updateSearch();
+    }
+
+    static void replaceAll() {
+        String word = findField.getText();
+        if (word.isEmpty()) return;
+
+        String content = text.getText();
+        String replacement = replaceField.getText();
+        StringBuilder result = new StringBuilder();
+        int i = 0;
+
+        while (i < content.length()) {
+            if (i <= content.length() - word.length()
+                    && content.regionMatches(true, i, word, 0, word.length())) {
+                result.append(replacement);
+                i += word.length();
+            } else {
+                result.append(content.charAt(i));
+                i++;
+            }
+        }
+
+        text.setText(result.toString());
+        updateSearch();
     }
 }
