@@ -46,6 +46,7 @@ public class Main {
         JMenuItem selectAll = new JMenuItem("Select All");
         JMenuItem find = new JMenuItem("Find");
         JMenuItem replace = new JMenuItem("Replace");
+        JMenuItem goToLine = new JMenuItem("Go to Line");
 
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel findLabel = new JLabel("Find:");
@@ -62,6 +63,7 @@ public class Main {
         newFile.setAccelerator(KeyStroke.getKeyStroke("control N"));
         openFile.setAccelerator(KeyStroke.getKeyStroke("control O"));
         saveFile.setAccelerator(KeyStroke.getKeyStroke("control S"));
+        goToLine.setAccelerator(KeyStroke.getKeyStroke("control G"));
         saveAs.setAccelerator(KeyStroke.getKeyStroke("control shift S"));
         undo.setAccelerator(KeyStroke.getKeyStroke("control Z"));
         redo.setAccelerator(KeyStroke.getKeyStroke("control Y"));
@@ -161,6 +163,25 @@ public class Main {
             findField.selectAll();
         });
 
+        goToLine.addActionListener(e -> {
+            String input = JOptionPane.showInputDialog(frame, "Line number:");
+            if (input == null) return;
+
+            try {
+                int line = Integer.parseInt(input);
+                if (line < 1 || line > text.getLineCount()) {
+                    JOptionPane.showMessageDialog(frame, "Line number out of range");
+                    return;
+                }
+            
+                int position = text.getLineStartOffset(line - 1);
+                text.setCaretPosition(position);
+                text.requestFocus();
+            } catch (NumberFormatException | BadLocationException ex) {
+                JOptionPane.showMessageDialog(frame, "Enter a valid line number");
+            }
+        });
+
         saveFile.addActionListener(e -> save(frame));
         saveAs.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
@@ -194,6 +215,7 @@ public class Main {
         view.add(increaseFont);
         view.add(decreaseFont);
         view.add(resetFont);
+        edit.add(goToLine);
         bar.add(file);
         bar.add(edit);
         bar.add(view);
