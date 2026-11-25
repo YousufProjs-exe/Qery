@@ -10,6 +10,8 @@ import java.nio.file.*;
 public class Main {
     static File currentFile;
     static JTextArea text = new JTextArea();
+    static JTextArea lines = new JTextArea("1");
+    static int defaultFontSize = text.getFont().getSize();
     static boolean changed = false;
     static UndoManager undoManager = new UndoManager();
     static JTextField findField = new JTextField(18);
@@ -25,6 +27,11 @@ public class Main {
         JMenuBar bar = new JMenuBar();
         JMenu file = new JMenu("File");
         JMenu edit = new JMenu("Edit");
+        JMenu view = new JMenu("View");
+        JMenuItem increaseFont = new JMenuItem("Font Size +");
+        JMenuItem decreaseFont = new JMenuItem("Font Size -");
+        JMenuItem resetFont = new JMenuItem("Reset Font Size");
+        int[] fontSize = {defaultFontSize};
         JMenuItem newFile = new JMenuItem("New");
         JMenuItem openFile = new JMenuItem("Open");
         JMenuItem saveFile = new JMenuItem("Save");
@@ -79,6 +86,27 @@ public class Main {
         copy.addActionListener(e -> text.copy());
         paste.addActionListener(e -> text.paste());
         selectAll.addActionListener(e -> text.selectAll());
+        increaseFont.addActionListener(e -> {
+            if (fontSize[0] < 48) {
+                fontSize[0]++;
+                text.setFont(text.getFont().deriveFont((float) fontSize[0]));
+                lines.setFont(text.getFont());
+            }
+        });
+
+        decreaseFont.addActionListener(e -> {
+            if (fontSize[0] > 8) {
+                fontSize[0]--;
+                text.setFont(text.getFont().deriveFont((float) fontSize[0]));
+                lines.setFont(text.getFont());
+            }
+        });
+
+        resetFont.addActionListener(e -> {
+            fontSize[0] = defaultFontSize;
+            text.setFont(text.getFont().deriveFont((float) fontSize[0]));
+            lines.setFont(text.getFont());
+        });
 
         newFile.addActionListener(e -> {
             if (confirm(frame)) {
@@ -157,11 +185,15 @@ public class Main {
         edit.add(find);
         edit.add(replace);
         edit.add(selectAll);
+        view.add(increaseFont);
+        view.add(decreaseFont);
+        view.add(resetFont);
         bar.add(file);
         bar.add(edit);
+        bar.add(view);
 
         frame.setJMenuBar(bar);
-        JTextArea lines = new JTextArea("1");
+        lines.setText("1");
         lines.setBackground(text.getBackground());
         lines.setForeground(Color.GRAY);
         lines.setEditable(false);
