@@ -59,19 +59,19 @@ public class Main {
         JCheckBoxMenuItem wordWrap = new JCheckBoxMenuItem("Word Wrap");
 
         // Shortcuts 
-        find.setAccelerator(KeyStroke.getKeyStroke("control F"));
-        replace.setAccelerator(KeyStroke.getKeyStroke("control H"));
-        newFile.setAccelerator(KeyStroke.getKeyStroke("control N"));
-        openFile.setAccelerator(KeyStroke.getKeyStroke("control O"));
-        saveFile.setAccelerator(KeyStroke.getKeyStroke("control S"));
-        goToLine.setAccelerator(KeyStroke.getKeyStroke("control G"));
-        saveAs.setAccelerator(KeyStroke.getKeyStroke("control shift S"));
-        undo.setAccelerator(KeyStroke.getKeyStroke("control Z"));
-        redo.setAccelerator(KeyStroke.getKeyStroke("control Y"));
-        increaseFont.setAccelerator(KeyStroke.getKeyStroke("control shift EQUALS"));
-        decreaseFont.setAccelerator(KeyStroke.getKeyStroke("control MINUS"));
-        resetFont.setAccelerator(KeyStroke.getKeyStroke("control 0"));
-        exit.setAccelerator(KeyStroke.getKeyStroke("control Q"));
+        find.setAccelerator(KeyStroke.getKeyStroke("ctrl F"));
+        replace.setAccelerator(KeyStroke.getKeyStroke("ctrl H"));
+        newFile.setAccelerator(KeyStroke.getKeyStroke("ctrl N"));
+        openFile.setAccelerator(KeyStroke.getKeyStroke("ctrl O"));
+        saveFile.setAccelerator(KeyStroke.getKeyStroke("ctrl S"));
+        goToLine.setAccelerator(KeyStroke.getKeyStroke("ctrl G"));
+        saveAs.setAccelerator(KeyStroke.getKeyStroke("ctrl shift S"));
+        undo.setAccelerator(KeyStroke.getKeyStroke("ctrl Z"));
+        redo.setAccelerator(KeyStroke.getKeyStroke("ctrl Y"));
+        increaseFont.setAccelerator(KeyStroke.getKeyStroke("ctrl shift ="));
+        decreaseFont.setAccelerator(KeyStroke.getKeyStroke("ctrl -"));
+        resetFont.setAccelerator(KeyStroke.getKeyStroke("ctrl 0"));
+        exit.setAccelerator(KeyStroke.getKeyStroke("ctrl Q"));
 
         text.getDocument().addUndoableEditListener(e -> undoManager.addEdit(e.getEdit()));
         text.getDocument().addDocumentListener(new DocumentListener() {
@@ -202,6 +202,7 @@ public class Main {
 
         exit.addActionListener(e -> { if (confirm(frame)) frame.dispose(); });
 
+        // Ribbon bar 
         file.add(newFile);
         file.add(openFile);
         file.add(saveFile);
@@ -225,7 +226,7 @@ public class Main {
         view.add(decreaseFont);
         view.add(resetFont);
         view.add(wordWrap);
-        
+
         bar.add(file);
         bar.add(edit);
         bar.add(view);
