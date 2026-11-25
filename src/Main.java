@@ -49,8 +49,8 @@ public class Main {
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel findLabel = new JLabel("Find:");
         JLabel replaceLabel = new JLabel("Replace:");
-        JButton previous = new JButton("↑");
-        JButton next = new JButton("↓");
+        JButton previous = new JButton("\u2191");
+        JButton next = new JButton("\u2193");
         JButton replaceOne = new JButton("Replace");
         JButton replaceEvery = new JButton("Replace All");
         JButton closeSearch = new JButton("X");
