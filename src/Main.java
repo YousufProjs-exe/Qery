@@ -4,7 +4,6 @@ import javax.swing.event.*;
 import javax.swing.text.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.awt.Color;
 import java.io.*;
 import java.nio.file.*;
 
@@ -167,6 +166,8 @@ public class Main {
         lines.setForeground(Color.GRAY);
         lines.setEditable(false);
         lines.setFocusable(false);
+        lines.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
+        text.setMargin(new Insets(0, 5, 0, 0));
 
         text.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
@@ -190,6 +191,26 @@ public class Main {
                     numbers.append(i).append("\n");
                 }
                 lines.setText(numbers.toString());
+            }
+        });
+
+        text.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("control H"), "replace");
+        text.getActionMap().put("replace", new AbstractAction() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                replace.doClick();
+            }
+        });
+
+        text.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("shift SPACE"), "newLine");
+        text.getActionMap().put("newLine", new AbstractAction() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                text.replaceSelection("\n");
+            }
+        });
+        text.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("shift ENTER"), "newLine");
+        text.getActionMap().put("newLine", new AbstractAction() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                text.replaceSelection("\n");
             }
         });
 
