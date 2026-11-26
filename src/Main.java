@@ -20,6 +20,7 @@ public class Main {
     static JLabel matchCount = new JLabel("0 of 0");
     static ArrayList<Integer> matches = new ArrayList<>();
     static ArrayList<Object> normalHighlights = new ArrayList<>();
+    static ArrayList<File> recentFiles = new ArrayList<>();
     static Object currentHighlight;
     static Highlighter.HighlightPainter normalPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
     static Highlighter.HighlightPainter selectedPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.ORANGE);
@@ -30,6 +31,7 @@ public class Main {
         text.setSelectionColor(Color.ORANGE);
         JMenuBar bar = new JMenuBar();
         JMenu file = new JMenu("File");
+        JMenu recentMenu = new JMenu("Open Recent");
         JMenu edit = new JMenu("Edit");
         JMenu view = new JMenu("View");
         JMenuItem increaseFont = new JMenuItem("Font Size +");
@@ -73,9 +75,11 @@ public class Main {
         saveAs.setAccelerator(KeyStroke.getKeyStroke("ctrl shift S"));
         undo.setAccelerator(KeyStroke.getKeyStroke("ctrl Z"));
         redo.setAccelerator(KeyStroke.getKeyStroke("ctrl Y"));
-        print.setAccelerator(KeyStroke.getKeyStroke("control P"));
-        increaseFont.setAccelerator(KeyStroke.getKeyStroke("ctrl shift ="));
+        print.setAccelerator(KeyStroke.getKeyStroke("ctrl P"));
+        // increaseFont.setAccelerator(KeyStroke.getKeyStroke("ctrl shift ="));
+        increaseFont.setAccelerator(KeyStroke.getKeyStroke("ctrl +"));
         decreaseFont.setAccelerator(KeyStroke.getKeyStroke("ctrl -"));
+        // recentMenu.setAccelerator(KeyStroke.getKeyStroke("ctrl r"));
         resetFont.setAccelerator(KeyStroke.getKeyStroke("ctrl 0"));
         exit.setAccelerator(KeyStroke.getKeyStroke("ctrl Q"));
         text.getInputMap().put(KeyStroke.getKeyStroke("F5"), "insertDateTime");
@@ -163,6 +167,7 @@ public class Main {
                     String content = Files.readString(chooser.getSelectedFile().toPath());
                     text.setText(content);
                     currentFile = chooser.getSelectedFile();
+                    addRecentFile(recentMenu, currentFile, frame);
                     changed = false;
                     undoManager.discardAllEdits();
                     updateTitle(frame);
@@ -255,6 +260,7 @@ public class Main {
         file.add(openFile);
         file.add(saveFile);
         file.add(saveAs);
+        file.add(recentMenu);
         file.add(print);
         file.addSeparator();
         file.add(exit);
@@ -368,14 +374,12 @@ public class Main {
                 updateSearch();
             }
         });
-
         previous.addActionListener(e -> {
             if (!matches.isEmpty()) {
                 int index = matches.indexOf(text.getSelectionStart());
                 selectMatch(index == -1 ? matches.size() - 1 : index - 1);
             }
         });
-
         next.addActionListener(e -> {
             if (!matches.isEmpty()) {
                 int index = matches.indexOf(text.getSelectionStart());
@@ -385,7 +389,6 @@ public class Main {
 
         replaceOne.addActionListener(e -> replaceCurrent());
         replaceEvery.addActionListener(e -> replaceAll());
-
         closeSearch.addActionListener(e -> {
             searchPanel.setVisible(false);
             text.getHighlighter().removeAllHighlights();
@@ -393,20 +396,14 @@ public class Main {
             text.requestFocus();
         });
 
-        frame.getRootPane().getInputMap(
-            JComponent.WHEN_IN_FOCUSED_WINDOW
-        ).put(KeyStroke.getKeyStroke("control F"), "find");
-
+        frame.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("control F"), "find");
         frame.getRootPane().getActionMap().put("find", new AbstractAction() {
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 find.doClick();
             }
         });
 
-        frame.getRootPane().getInputMap(
-            JComponent.WHEN_IN_FOCUSED_WINDOW
-        ).put(KeyStroke.getKeyStroke("control H"), "replace");
-
+        frame.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("control H"), "replace");
         frame.getRootPane().getActionMap().put("replace", new AbstractAction() {
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 replace.doClick();
@@ -415,7 +412,6 @@ public class Main {
 
         frame.setSize(900, 600);
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-
         frame.addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
                 if (confirm(frame)) frame.dispose();
@@ -425,6 +421,38 @@ public class Main {
         updateTitle(frame);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+    }
+
+    static void addRecentFile(JMenu recentMenu, File file, JFrame frame) {
+        recentFiles.remove(file);
+        recentFiles.add(0, file);
+
+        while (recentFiles.size() > 10) {
+            recentFiles.remove(recentFiles.size() - 1);
+        }
+
+        recentMenu.removeAll();
+
+        for (File recentFile : recentFiles) {
+            JMenuItem item = new JMenuItem(recentFile.getName());
+
+            item.addActionListener(e -> {
+                if (!confirm(frame)) return;
+
+                try {
+                    text.setText(Files.readString(recentFile.toPath()));
+                    currentFile = recentFile;
+                    changed = false;
+                    undoManager.discardAllEdits();
+                    updateTitle(frame);
+                    addRecentFile(recentMenu, recentFile, frame);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(frame, "Could not open file");
+                }
+            });
+
+            recentMenu.add(item);
+        }
     }
 
     static boolean confirm(JFrame frame) {
