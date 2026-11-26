@@ -53,9 +53,11 @@ public class Main {
         JMenuItem replace = new JMenuItem("Replace");
         JMenuItem print = new JMenuItem("Print");
         JMenuItem goToLine = new JMenuItem("Go to Line");
+        // JMenuItem preview = new JMenuItem("Go Live");
 
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JPanel statusPanel = new JPanel(new BorderLayout());
+        JPanel statusRight = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         JLabel findLabel = new JLabel("Find:");
         JLabel replaceLabel = new JLabel("Replace:");
         JLabel status = new JLabel("Ln 1, Col 1");
@@ -64,6 +66,7 @@ public class Main {
             "Auto Detect", "Plain Text", "Markdown List", "HTML", "CSS",
             "JavaScript", "JAVA", "Python", "C", "C++", "C#", "RUST"
         });
+        JButton preview = new JButton("Go Live");
         JButton previous = new JButton("\u2191");
         JButton next = new JButton("\u2193");
         JButton replaceOne = new JButton("Replace");
@@ -254,6 +257,22 @@ public class Main {
             }
         });
         exit.addActionListener(e -> { if (confirm(frame)) frame.dispose(); });
+        preview.addActionListener(e -> {
+            if(currentFile == null || changed) {
+                save(frame, languageSelector);
+            }
+            if (currentFile == null || changed) return;
+            if (!currentFile.getName().toLowerCase().endsWith(".html") && !currentFile.getName().toLowerCase().endsWith(".html")) {
+                JOptionPane.showMessageDialog(frame, "Bruh Save the file as HTML first.");
+                return ;
+            }
+            
+            try{
+                Desktop.getDesktop().browse(currentFile.toURI());
+            } catch(Exception ex) {
+                JOptionPane.showMessageDialog(frame, "Couldnt open the Browser!");
+            }
+        });
 
         // Ribbon bar || Title Bar idk 
         file.add(newFile);
@@ -262,6 +281,7 @@ public class Main {
         file.add(saveAs);
         file.add(recentMenu);
         file.add(print);
+        // file.add(preview);
         file.addSeparator();
         file.add(exit);
 
@@ -290,6 +310,9 @@ public class Main {
         statusPanel.add(status, BorderLayout.WEST);
         statusPanel.add(characterCount, BorderLayout.CENTER);
         statusPanel.add(languageSelector, BorderLayout.EAST);
+        statusRight.add(preview);
+        statusRight.add(languageSelector);
+        statusPanel.add(statusRight, BorderLayout.EAST);
         frame.add(statusPanel, BorderLayout.SOUTH);
         lines.setText("1");
         lines.setBackground(text.getBackground());
