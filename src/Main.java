@@ -167,8 +167,8 @@ public class Main {
                 try {
                     String content = Files.readString(chooser.getSelectedFile().toPath());
                     text.setText(content);
-                    currentFile = chooser.getSelectedFile();
-                    addRecentFile(recentMenu, currentFile, frame);
+                    detectLanguage(currentFile, languageSelector);
+                    addRecentFile(recentMenu, currentFile, frame, languageSelector);
                     changed = false;
                     undoManager.discardAllEdits();
                     updateTitle(frame);
@@ -234,14 +234,14 @@ public class Main {
             text.setLineWrap(wordWrap.isSelected());
             text.setWrapStyleWord(wordWrap.isSelected());
         });
-        saveFile.addActionListener(e -> save(frame));
+        saveFile.addActionListener(e -> save(frame, languageSelector));
         saveAs.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
 
             if (chooser.showSaveDialog(frame) == JFileChooser.APPROVE_OPTION) {
                 File oldFile = currentFile;
-                currentFile = chooser.getSelectedFile();
-                save(frame);
+                currentFile = addSelectedExtension(chooser.getSelectedFile(), languageSelector);
+                save(frame, languageSelector);
                 if (changed) currentFile = oldFile;
             }
         });
@@ -413,14 +413,12 @@ public class Main {
         frame.setVisible(true);
     }
 
-    static void addRecentFile(JMenu recentMenu, File file, JFrame frame) {
+    static void addRecentFile(JMenu recentMenu, File file, JFrame frame, JComboBox<String> languageSelector) {
         recentFiles.remove(file);
         recentFiles.add(0, file);
-
         while (recentFiles.size() > 10) {
             recentFiles.remove(recentFiles.size() - 1);
         }
-
         recentMenu.removeAll();
 
         for (File recentFile : recentFiles) {
@@ -432,10 +430,11 @@ public class Main {
                 try {
                     text.setText(Files.readString(recentFile.toPath()));
                     currentFile = recentFile;
+                    detectLanguage(currentFile, languageSelector);
                     changed = false;
                     undoManager.discardAllEdits();
                     updateTitle(frame);
-                    addRecentFile(recentMenu, recentFile, frame);
+                    addRecentFile(recentMenu, recentFile, frame, languageSelector);
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(frame, "Could not open file");
                 }
@@ -443,6 +442,47 @@ public class Main {
 
             recentMenu.add(item);
         }
+    }
+
+    static String getExtension(String language) {
+        switch (language) {
+            case "JAVA": return ".java";
+            case "C": return ".c";
+            case "RUST": return ".rs";
+            case "C++": return ".cpp";
+            case "HTML": return ".html";
+            case "CSS": return ".css";
+            case "JavaScript": return ".js";
+            case "Python": return ".py";
+            default: return ".txt";
+        }
+    }
+
+    static File addSelectedExtension(File file, JComboBox<String> languageSelector) {
+        String name = file.getName();
+        if (name.contains(".")) return file;
+
+        String language = (String) languageSelector.getSelectedItem();
+        if ("Auto Detect".equals(language)) language = "Plain Text";
+
+        return new File(file.getParentFile(), name + getExtension(language));
+    }
+
+    static void detectLanguage(File file, JComboBox<String> languageSelector) {
+        String name = file.getName().toLowerCase();
+        String language = "Plain Text";
+
+        if (name.endsWith(".java")) language = "JAVA";
+        else if (name.endsWith(".c")) language = "C";
+        else if (name.endsWith("RUST")) language = "RUST";
+        else if (name.endsWith(".cpp") || name.endsWith(".cc") || name.endsWith(".cxx")) language = "C++";
+        else if (name.endsWith(".html") || name.endsWith(".htm")) language = "HTML";
+        else if (name.endsWith(".css")) language = "CSS";
+        else if (name.endsWith(".js")) language = "JavaScript";
+        else if (name.endsWith(".py")) language = "Python";
+
+        if ("Auto Detect".equals(languageSelector.getSelectedItem()))  return;
+        languageSelector.setSelectedItem(language);
     }
 
     static boolean confirm(JFrame frame) {
@@ -458,11 +498,11 @@ public class Main {
         return result == JOptionPane.YES_OPTION;
     }
 
-    static void save(JFrame frame) {
+    static void save(JFrame frame, JComboBox<String> languageSelector) {
         if (currentFile == null) {
             JFileChooser chooser = new JFileChooser();
             if (chooser.showSaveDialog(frame) != JFileChooser.APPROVE_OPTION) return;
-            currentFile = chooser.getSelectedFile();
+            currentFile = addSelectedExtension(chooser.getSelectedFile(), languageSelector);
         }
 
         try {
