@@ -47,6 +47,7 @@ public class Main {
         JMenuItem selectAll = new JMenuItem("Select All");
         JMenuItem find = new JMenuItem("Find");
         JMenuItem replace = new JMenuItem("Replace");
+        JMenuItem print = new JMenuItem("Print");
         JMenuItem goToLine = new JMenuItem("Go to Line");
 
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -70,12 +71,14 @@ public class Main {
         saveAs.setAccelerator(KeyStroke.getKeyStroke("ctrl shift S"));
         undo.setAccelerator(KeyStroke.getKeyStroke("ctrl Z"));
         redo.setAccelerator(KeyStroke.getKeyStroke("ctrl Y"));
+        print.setAccelerator(KeyStroke.getKeyStroke("control P"));
         increaseFont.setAccelerator(KeyStroke.getKeyStroke("ctrl shift ="));
         decreaseFont.setAccelerator(KeyStroke.getKeyStroke("ctrl -"));
         resetFont.setAccelerator(KeyStroke.getKeyStroke("ctrl 0"));
         exit.setAccelerator(KeyStroke.getKeyStroke("ctrl Q"));
         text.getInputMap().put(KeyStroke.getKeyStroke("F5"), "insertDateTime");
 
+        // Listensers 
         text.addCaretListener(e -> {
             try {
                 int line = text.getLineOfOffset(e.getDot());
@@ -165,6 +168,14 @@ public class Main {
             }
         });
 
+        print.addActionListener(e -> {
+            try {
+                text.print();
+            } catch (java.awt.print.PrinterException ex) {
+                JOptionPane.showMessageDialog(frame, "Could not print the document.");
+            }
+        });
+
         find.addActionListener(e -> {
             searchPanel.setVisible(true);
             replaceLabel.setVisible(false);
@@ -228,6 +239,7 @@ public class Main {
         file.add(openFile);
         file.add(saveFile);
         file.add(saveAs);
+        file.add(print);
         file.addSeparator();
         file.add(exit);
 
