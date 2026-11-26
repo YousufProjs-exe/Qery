@@ -6,6 +6,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.io.*;
 import java.nio.file.*;
+import java.awt.event.ActionEvent;
 
 public class Main {
     static File currentFile;
@@ -73,6 +74,7 @@ public class Main {
         decreaseFont.setAccelerator(KeyStroke.getKeyStroke("ctrl -"));
         resetFont.setAccelerator(KeyStroke.getKeyStroke("ctrl 0"));
         exit.setAccelerator(KeyStroke.getKeyStroke("ctrl Q"));
+        text.getInputMap().put(KeyStroke.getKeyStroke("F5"), "insertDateTime");
 
         text.addCaretListener(e -> {
             try {
@@ -105,6 +107,14 @@ public class Main {
         cut.addActionListener(e -> text.cut());
         copy.addActionListener(e -> text.copy());
         paste.addActionListener(e -> text.paste());
+        text.getActionMap().put("insertDateTime", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                String dateTime = java.time.LocalDateTime.now()
+                    // .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm dd-MM-yyyy"));
+                    .format(java.time.format.DateTimeFormatter.ofPattern("hh:mm a dd-MM-yyyy"));
+                text.replaceSelection(dateTime);
+            }
+        });
         selectAll.addActionListener(e -> text.selectAll());
         increaseFont.addActionListener(e -> {
             if (fontSize[0] < 48) {
