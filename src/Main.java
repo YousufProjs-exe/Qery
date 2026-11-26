@@ -55,9 +55,13 @@ public class Main {
         JMenuItem goToLine = new JMenuItem("Go to Line");
 
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel statusPanel = new JPanel(new BorderLayout());
         JLabel findLabel = new JLabel("Find:");
         JLabel replaceLabel = new JLabel("Replace:");
         JLabel status = new JLabel("Ln 1, Col 1");
+        JComboBox<String> languageSelector = new JComboBox<>(new String[] {
+            "Plain Text", "Markdown List", "HTML", "CSS", "JavaScript", "JAVA", "Python", "C", "C++", "C#", "RUST"
+        });
         JButton previous = new JButton("\u2191");
         JButton next = new JButton("\u2193");
         JButton replaceOne = new JButton("Replace");
@@ -80,6 +84,7 @@ public class Main {
         increaseFont.setAccelerator(KeyStroke.getKeyStroke("ctrl +"));
         decreaseFont.setAccelerator(KeyStroke.getKeyStroke("ctrl -"));
         // recentMenu.setAccelerator(KeyStroke.getKeyStroke("ctrl r"));
+        languageSelector.setSelectedItem("Plain Text");
         resetFont.setAccelerator(KeyStroke.getKeyStroke("ctrl 0"));
         exit.setAccelerator(KeyStroke.getKeyStroke("ctrl Q"));
         text.getInputMap().put(KeyStroke.getKeyStroke("F5"), "insertDateTime");
@@ -134,7 +139,6 @@ public class Main {
                 lines.setFont(text.getFont());
             }
         });
-
         decreaseFont.addActionListener(e -> {
             if (fontSize[0] > 8) {
                 fontSize[0]--;
@@ -142,13 +146,11 @@ public class Main {
                 lines.setFont(text.getFont());
             }
         });
-
         resetFont.addActionListener(e -> {
             fontSize[0] = defaultFontSize;
             text.setFont(text.getFont().deriveFont((float) fontSize[0]));
             lines.setFont(text.getFont());
         });
-
         newFile.addActionListener(e -> {
             if (confirm(frame)) {
                 text.setText("");
@@ -158,7 +160,6 @@ public class Main {
                 updateTitle(frame);
             }
         });
-
         openFile.addActionListener(e -> {
             if (!confirm(frame)) return;
             JFileChooser chooser = new JFileChooser();
@@ -176,7 +177,6 @@ public class Main {
                 }
             }
         });
-
         print.addActionListener(e -> {
             try {
                 text.print();
@@ -184,7 +184,6 @@ public class Main {
                 JOptionPane.showMessageDialog(frame, "Could not print the document.");
             }
         });
-
         find.addActionListener(e -> {
             searchPanel.setVisible(true);
             replaceLabel.setVisible(false);
@@ -194,7 +193,6 @@ public class Main {
             findField.requestFocus();
             findField.selectAll();
         });
-
         replace.addActionListener(e -> {
             searchPanel.setVisible(true);
             replaceLabel.setVisible(true);
@@ -204,19 +202,16 @@ public class Main {
             findField.requestFocus();
             findField.selectAll();
         });
-
         frame.getRootPane().getActionMap().put("findNext", new AbstractAction() {
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 next.doClick();
             }
         });
-
         frame.getRootPane().getActionMap().put("findPrevious", new AbstractAction() {
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 previous.doClick();
             }
         });
-
         goToLine.addActionListener(e -> {
             String input = JOptionPane.showInputDialog(frame, "Line number:");
             if (input == null) return;
@@ -235,12 +230,10 @@ public class Main {
                 JOptionPane.showMessageDialog(frame, "Enter a valid line number");
             }
         });
-
         wordWrap.addActionListener(e -> {
             text.setLineWrap(wordWrap.isSelected());
             text.setWrapStyleWord(wordWrap.isSelected());
         });
-
         saveFile.addActionListener(e -> save(frame));
         saveAs.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
@@ -252,10 +245,9 @@ public class Main {
                 if (changed) currentFile = oldFile;
             }
         });
-
         exit.addActionListener(e -> { if (confirm(frame)) frame.dispose(); });
 
-        // Ribbon bar 
+        // Ribbon bar || Title Bar idk 
         file.add(newFile);
         file.add(openFile);
         file.add(saveFile);
@@ -287,7 +279,9 @@ public class Main {
         bar.add(view);
 
         frame.setJMenuBar(bar);
-        frame.add(status, BorderLayout.SOUTH);
+        statusPanel.add(status, BorderLayout.WEST);
+        statusPanel.add(languageSelector, BorderLayout.EAST);
+        frame.add(statusPanel, BorderLayout.SOUTH);
         lines.setText("1");
         lines.setBackground(text.getBackground());
         lines.setForeground(Color.GRAY);
@@ -386,7 +380,6 @@ public class Main {
                 selectMatch(index == -1 ? 0 : index + 1);
             }
         });
-
         replaceOne.addActionListener(e -> replaceCurrent());
         replaceEvery.addActionListener(e -> replaceAll());
         closeSearch.addActionListener(e -> {
@@ -402,14 +395,12 @@ public class Main {
                 find.doClick();
             }
         });
-
         frame.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("control H"), "replace");
         frame.getRootPane().getActionMap().put("replace", new AbstractAction() {
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 replace.doClick();
             }
         });
-
         frame.setSize(900, 600);
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frame.addWindowListener(new java.awt.event.WindowAdapter() {
@@ -417,7 +408,6 @@ public class Main {
                 if (confirm(frame)) frame.dispose();
             }
         });
-
         updateTitle(frame);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
