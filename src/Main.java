@@ -59,6 +59,7 @@ public class Main {
         JLabel findLabel = new JLabel("Find:");
         JLabel replaceLabel = new JLabel("Replace:");
         JLabel status = new JLabel("Ln 1, Col 1");
+        JLabel characterCount = new JLabel("    Characters: 0");
         JComboBox<String> languageSelector = new JComboBox<>(new String[] {
             "Auto Detect", "Plain Text", "Markdown List", "HTML", "CSS",
             "JavaScript", "JAVA", "Python", "C", "C++", "C#", "RUST"
@@ -287,6 +288,7 @@ public class Main {
 
         frame.setJMenuBar(bar);
         statusPanel.add(status, BorderLayout.WEST);
+        statusPanel.add(characterCount, BorderLayout.CENTER);
         statusPanel.add(languageSelector, BorderLayout.EAST);
         frame.add(statusPanel, BorderLayout.SOUTH);
         lines.setText("1");
@@ -301,16 +303,18 @@ public class Main {
             public void insertUpdate(DocumentEvent e) {
                 updateLines();
                 updateSearch();
+                characterCount.setText("    Character: " + text.getText().length());
             }
-
             public void removeUpdate(DocumentEvent e) {
                 updateLines();
                 updateSearch();
+                characterCount.setText("    Character: " + text.getText().length());
             }
 
             public void changedUpdate(DocumentEvent e) {
                 updateLines();
                 updateSearch();
+                characterCount.setText("    Chacarter: " + text.getText().length());
             }
 
             void updateLines() {
