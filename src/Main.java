@@ -19,6 +19,7 @@ public class Main {
     static JTextField replaceField = new JTextField(18);
     static JLabel matchCount = new JLabel("0 of 0");
     static ArrayList<Integer> matches = new ArrayList<>();
+    static ArrayList<Object> normalHighlights = new ArrayList<>();
     static Object currentHighlight;
     static Highlighter.HighlightPainter normalPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
     static Highlighter.HighlightPainter selectedPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.ORANGE);
@@ -26,6 +27,7 @@ public class Main {
     public static void main(String args[]) {
         // Menu and all
         JFrame frame = new JFrame("Qery");
+        text.setSelectionColor(Color.ORANGE);
         JMenuBar bar = new JMenuBar();
         JMenu file = new JMenu("File");
         JMenu edit = new JMenu("Edit");
@@ -77,6 +79,8 @@ public class Main {
         resetFont.setAccelerator(KeyStroke.getKeyStroke("ctrl 0"));
         exit.setAccelerator(KeyStroke.getKeyStroke("ctrl Q"));
         text.getInputMap().put(KeyStroke.getKeyStroke("F5"), "insertDateTime");
+        frame.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("F3"), "findNext");
+        frame.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("shift F3"), "findPrevious");
 
         // Listensers 
         text.addCaretListener(e -> {
@@ -194,6 +198,18 @@ public class Main {
             replaceEvery.setVisible(true);
             findField.requestFocus();
             findField.selectAll();
+        });
+
+        frame.getRootPane().getActionMap().put("findNext", new AbstractAction() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                next.doClick();
+            }
+        });
+
+        frame.getRootPane().getActionMap().put("findPrevious", new AbstractAction() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                previous.doClick();
+            }
         });
 
         goToLine.addActionListener(e -> {
@@ -450,6 +466,7 @@ public class Main {
         highlighter.removeAllHighlights();
         matches.clear();
         currentHighlight = null;
+        normalHighlights.clear();
 
         String content = text.getText();
         String word = findField.getText();
@@ -463,7 +480,7 @@ public class Main {
             if (content.regionMatches(true, i, word, 0, word.length())) {
                 matches.add(i);
                 try {
-                    highlighter.addHighlight(i, i + word.length(), normalPainter);
+                    normalHighlights.add(highlighter.addHighlight(i, i + word.length(), normalPainter));
                 } catch (BadLocationException e) {
                     e.printStackTrace();
                 }
@@ -480,7 +497,6 @@ public class Main {
 
     static void selectMatch(int index) {
         if (matches.isEmpty()) return;
-
         index = (index + matches.size()) % matches.size();
 
         if (currentHighlight != null) {
@@ -489,9 +505,12 @@ public class Main {
 
         int start = matches.get(index);
         int end = start + findField.getText().length();
+        text.getHighlighter().removeHighlight(normalHighlights.get(index));
 
         try {
-            currentHighlight = text.getHighlighter().addHighlight(start, end, selectedPainter);
+            currentHighlight = text.getHighlighter().addHighlight(
+                start, end, selectedPainter
+            );
         } catch (BadLocationException e) {
             e.printStackTrace();
         }
