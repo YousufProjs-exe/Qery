@@ -60,7 +60,8 @@ public class Main {
         JLabel replaceLabel = new JLabel("Replace:");
         JLabel status = new JLabel("Ln 1, Col 1");
         JComboBox<String> languageSelector = new JComboBox<>(new String[] {
-            "Plain Text", "Markdown List", "HTML", "CSS", "JavaScript", "JAVA", "Python", "C", "C++", "C#", "RUST"
+            "Auto Detect", "Plain Text", "Markdown List", "HTML", "CSS",
+            "JavaScript", "JAVA", "Python", "C", "C++", "C#", "RUST"
         });
         JButton previous = new JButton("\u2191");
         JButton next = new JButton("\u2193");
@@ -162,13 +163,19 @@ public class Main {
         });
         openFile.addActionListener(e -> {
             if (!confirm(frame)) return;
+
             JFileChooser chooser = new JFileChooser();
+
             if (chooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
                 try {
-                    String content = Files.readString(chooser.getSelectedFile().toPath());
+                    File selectedFile = chooser.getSelectedFile();
+                    String content = Files.readString(selectedFile.toPath());
+                
+                    currentFile = selectedFile;
                     text.setText(content);
                     detectLanguage(currentFile, languageSelector);
                     addRecentFile(recentMenu, currentFile, frame, languageSelector);
+                
                     changed = false;
                     undoManager.discardAllEdits();
                     updateTitle(frame);
@@ -460,10 +467,16 @@ public class Main {
 
     static File addSelectedExtension(File file, JComboBox<String> languageSelector) {
         String name = file.getName();
-        if (name.contains(".")) return file;
+        int dot = name.lastIndexOf(".");
+
+        if (dot > 0) {
+            name = name.substring(0, dot);
+        }
 
         String language = (String) languageSelector.getSelectedItem();
-        if ("Auto Detect".equals(language)) language = "Plain Text";
+        if ("Auto Detect".equals(language)) {
+            language = "Plain Text";
+        }
 
         return new File(file.getParentFile(), name + getExtension(language));
     }
