@@ -4,6 +4,7 @@ import javax.swing.event.*;
 import javax.swing.text.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.concurrent.Flow;
 import java.io.*;
 import java.nio.file.*;
 import java.awt.event.ActionEvent;
@@ -56,8 +57,19 @@ public class Main {
         // JMenuItem preview = new JMenuItem("Go Live");
 
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel markdownToolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        JButton heading = new JButton("H1");
+        JButton list = new JButton("List");
+        JButton bold = new JButton("\uD835\uDC01");  
+        JButton italic = new JButton("\uD835\uDC3C");
+        JButton strike = new JButton("S\u0336"); 
+        JButton link = new JButton("\uD83D\uDD17");
+        JButton table = new JButton("Table");
+
         JPanel statusPanel = new JPanel(new BorderLayout());
         JPanel statusRight = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        JPanel editorPanel = new JPanel(new BorderLayout());
+        // JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel findLabel = new JLabel("Find:");
         JLabel replaceLabel = new JLabel("Replace:");
         JLabel status = new JLabel("Ln 1, Col 1");
@@ -137,6 +149,17 @@ public class Main {
             }
         });
         selectAll.addActionListener(e -> text.selectAll());
+        heading.addActionListener(e -> insertLinePrefix("# "));
+        list.addActionListener(e -> insertLinePrefix("- "));
+        bold.addActionListener(e -> wrapSelection("**", "**"));
+        italic.addActionListener(e -> wrapSelection("*", "*"));
+        strike.addActionListener(e -> wrapSelection("~~", "~~"));
+        link.addActionListener(e -> wrapSelection("[", "](url)"));
+        table.addActionListener(e -> {
+            String template = " | Column 1 | Column 2 |\\n| --- | --- |\\n|   |    |";
+            text.replaceSelection(template);
+        });
+
         increaseFont.addActionListener(e -> {
             if (fontSize[0] < 48) {
                 fontSize[0]++;
@@ -306,6 +329,14 @@ public class Main {
         bar.add(edit);
         bar.add(view);
 
+        markdownToolbar.add(heading);        
+        markdownToolbar.add(list);
+        markdownToolbar.add(bold);        
+        markdownToolbar.add(italic);
+        markdownToolbar.add(strike);        
+        markdownToolbar.add(link);
+        markdownToolbar.add(table);
+
         frame.setJMenuBar(bar);
         statusPanel.add(status, BorderLayout.WEST);
         statusPanel.add(characterCount, BorderLayout.CENTER);
@@ -371,7 +402,10 @@ public class Main {
 
         JScrollPane scroll = new JScrollPane(text);
         scroll.setRowHeaderView(lines);
-        frame.add(scroll);
+
+        editorPanel.add(markdownToolbar, BorderLayout.NORTH);
+        editorPanel.add(scroll, BorderLayout.CENTER);
+        frame.add(editorPanel, BorderLayout.CENTER);
 
         searchPanel.add(findLabel);
         searchPanel.add(findField);
@@ -476,6 +510,36 @@ public class Main {
 
             recentMenu.add(item);
         }
+    }
+
+    static void wrapSelection(String before, String after){
+        int start = text.getSelectionStart();
+        int end = text.getSelectionEnd();
+        String selected = text.getSelectedText();
+
+        if(selected == null ){
+            text.replaceSelection(before + after);
+            text.setCaretPosition(start + before.length());
+        }
+        else {
+            text.replaceRange(before + selected + after, start, end);
+            text.select( start + before.length(), end + before.length());
+        }
+
+        text.requestFocus();
+    }
+
+    static void insertLinePrefix(String prefix) {
+        int caret = text.getCaretPosition();
+        try {
+            int lineStart = text.getLineStartOffset(text.getLineOfOffset(caret));
+            text.insert(prefix, lineStart);
+            text.setCaretPosition(caret + prefix.length());
+        } catch(BadLocationException ex) {
+            JOptionPane.showMessageDialog(null, "Couldnt Format fahh");
+        }
+
+        text.requestFocus();
     }
 
     static String getExtension(String language) {
@@ -640,7 +704,7 @@ public class Main {
         int i = 0;
 
         while (i < content.length()) {
-            if (i <= content.length() - word.length()
+            if (i <= content.length() - word.length()  
                     && content.regionMatches(true, i, word, 0, word.length())) {
                 result.append(replacement);
                 i += word.length();
